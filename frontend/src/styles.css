@@ -1,0 +1,114 @@
+:root {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #111827;
+  background: #f7f8fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 38% 62%;
+  min-height: 100vh;
+}
+
+.left-panel,
+.right-panel {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.left-panel {
+  border-right: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.subtitle {
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+input,
+textarea,
+button {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+
+.followup {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.checkbox-grid label {
+  font-weight: 500;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.suggestion {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #d1d5db;
+}
+
+.placeholder {
+  color: #6b7280;
+  margin-top: 30px;
+}
+
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
