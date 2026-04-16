@@ -9,12 +9,20 @@ const defaultSupplement = {
   focus_sections: [],
 }
 
+const defaultLLM = {
+  api_key: '',
+  base_url: 'https://api.openai.com/v1',
+  model: 'gpt-4.1-mini',
+  temperature: 0.2,
+}
+
 function App() {
   const [jdText, setJdText] = useState('')
   const [resumeText, setResumeText] = useState('')
   const [resumeFile, setResumeFile] = useState(null)
   const [parseurDocumentId, setParseurDocumentId] = useState('')
   const [supplement, setSupplement] = useState(defaultSupplement)
+  const [llm, setLlm] = useState(defaultLLM)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [history, setHistory] = useState([])
@@ -62,6 +70,18 @@ function App() {
         form.append('parseur_document_id', parseurDocumentId.trim())
       }
 
+      if (llm.api_key.trim()) {
+        form.append(
+          'llm_config_json',
+          JSON.stringify({
+            api_key: llm.api_key.trim(),
+            base_url: llm.base_url.trim() || 'https://api.openai.com/v1',
+            model: llm.model.trim() || 'gpt-4.1-mini',
+            temperature: Number(llm.temperature ?? 0.2),
+          }),
+        )
+      }
+
       const activeSupplement = applyFollowup ? supplement : defaultSupplement
       if (
         activeSupplement.candidate_context ||
@@ -102,7 +122,37 @@ function App() {
     <div className="layout">
       <aside className="left-panel">
         <h1>Profile Polisher</h1>
-        <p className="subtitle">上传简历 + JD，支持补充追问并对比结果变化</p>
+        <p className="subtitle">上传简历 + JD，使用你自己的 LLM API Key 进行深度分析</p>
+
+        <section className="llm-config">
+          <h2>LLM配置（可选，推荐）</h2>
+          <label>API Key（仅本次请求使用）</label>
+          <input
+            type="password"
+            value={llm.api_key}
+            onChange={(e) => setLlm((prev) => ({ ...prev, api_key: e.target.value }))}
+            placeholder="sk-..."
+          />
+
+          <label>Base URL</label>
+          <input
+            value={llm.base_url}
+            onChange={(e) => setLlm((prev) => ({ ...prev, base_url: e.target.value }))}
+          />
+
+          <label>Model</label>
+          <input value={llm.model} onChange={(e) => setLlm((prev) => ({ ...prev, model: e.target.value }))} />
+
+          <label>Temperature</label>
+          <input
+            type="number"
+            min="0"
+            max="1"
+            step="0.1"
+            value={llm.temperature}
+            onChange={(e) => setLlm((prev) => ({ ...prev, temperature: e.target.value }))}
+          />
+        </section>
 
         <label>简历上传（PDF / DOCX）</label>
         <input

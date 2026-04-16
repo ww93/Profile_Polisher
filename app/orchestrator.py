@@ -6,16 +6,18 @@ from app.agents.optimizer import OptimizerAgent
 from app.agents.parser import ParserAgent
 from app.agents.reviewer import ReviewerAgent
 from app.schemas import AnalyzeRequest, AnalyzeResponse, ComparisonSummary, MatchResult
+from app.services.llm_client import LLMClient
 from app.services.parseur_client import ParseurClient
 
 
 class AnalysisOrchestrator:
     def __init__(self) -> None:
         self.parseur = ParseurClient()
+        self.llm_client = LLMClient()
         self.parser_agent = ParserAgent()
-        self.matcher_agent = MatcherAgent()
-        self.optimizer_agent = OptimizerAgent()
-        self.interviewer_agent = InterviewerAgent()
+        self.matcher_agent = MatcherAgent(self.llm_client)
+        self.optimizer_agent = OptimizerAgent(self.llm_client)
+        self.interviewer_agent = InterviewerAgent(self.llm_client)
         self.reviewer_agent = ReviewerAgent()
 
     async def run(self, request: AnalyzeRequest, previous_result: AnalyzeResponse | None = None) -> AnalyzeResponse:
@@ -27,9 +29,21 @@ class AnalysisOrchestrator:
                 resume_text = parseur_text
 
         resume, jd = self.parser_agent.run(resume_text=resume_text, jd_text=request.jd_text)
-        match = self.matcher_agent.run(resume=resume, jd=jd, supplement=request.supplement)
-        optimizations = self.optimizer_agent.run(resume=resume, jd=jd, match=match, supplement=request.supplement)
-        interview_questions = self.interviewer_agent.run(resume=resume, jd=jd, supplement=request.supplement)
+        match = await self.matcher_agent.run(resume=resume, jd=jd, supplement=request.supplement, llm=request.llm)
+        optimizations = await self.optimizer_agent.run(
+            resume=resume,
+            jd=jd,
+            match=match,
+            supplement=request.supplement,
+            llm=request.llm,
+        )
+        interview_questions = await self.interviewer_agent.run(
+            resume=resume,
+            jd=jd,
+            match=match,
+            supplement=request.supplement,
+            llm=request.llm,
+        )
 
         draft = AnalyzeResponse(
             match=match,

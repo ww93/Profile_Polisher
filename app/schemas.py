@@ -5,6 +5,14 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
+class LLMConfig(BaseModel):
+    api_key: str = Field(..., min_length=10)
+    base_url: str = Field(default="https://api.openai.com/v1")
+    model: str = Field(default="gpt-4.1-mini")
+    temperature: float = Field(default=0.2, ge=0.0, le=1.0)
+    timeout_seconds: int = Field(default=40, ge=5, le=180)
+
+
 class SupplementInput(BaseModel):
     candidate_context: str | None = None
     job_constraints: str | None = None
@@ -17,6 +25,7 @@ class AnalyzeRequest(BaseModel):
     jd_text: str = Field(..., min_length=1)
     parseur_document_id: str | None = None
     supplement: SupplementInput | None = None
+    llm: LLMConfig | None = None
 
 
 class ResumeNormalized(BaseModel):
@@ -85,4 +94,5 @@ class AnalyzeFormPayload(BaseModel):
     resume_text: str | None = None
     parseur_document_id: str | None = None
     supplement: SupplementInput | None = None
+    llm: LLMConfig | None = None
     previous_result: dict[str, Any] | None = None

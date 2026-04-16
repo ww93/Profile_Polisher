@@ -1,24 +1,36 @@
-# Profile Polisher (Multi-Agent + Web UI)
+# Profile Polisher (Multi-Agent + LLM-Enhanced)
 
-This repository contains a multi-agent resume/JD analysis backend and a React + Vite frontend with a **left/right split layout** inspired by productivity coding tools.
+This repository contains a multi-agent resume/JD analysis backend and a React + Vite frontend with a left/right split layout.
+
+## Key update: BYOK LLM analysis
+
+The platform now supports **Bring Your Own Key (BYOK)** LLM analysis.
+Users can input their own API key/base URL/model in the UI, and the backend will use those credentials for deep JD matching and project optimization.
+
+When no LLM config is provided, the system falls back to deterministic rule-based logic.
 
 ## Architecture
 
 Backend agents:
 
 1. **Parser Agent**: normalize resume/JD data.
-2. **Matcher Agent**: compute score and skill evidence.
-3. **Optimizer Agent**: generate rewrite suggestions.
-4. **Interviewer Agent**: generate interview follow-up questions.
+2. **Matcher Agent**: LLM-first semantic matching + evidence extraction.
+3. **Optimizer Agent**: LLM-first resume/project rewrite optimization.
+4. **Interviewer Agent**: LLM-first interview question generation.
 5. **Reviewer Agent**: apply quality checks.
 
-An orchestrator executes these agents and supports iterative refinement with structured supplement input.
+A single orchestrator coordinates these agents and iterative refinement.
 
-## Frontend capabilities
+## Prompt strategy
 
-- Left panel: resume upload (`PDF` / `DOCX`), resume text fallback, JD input, Parseur document ID, supplement form.
-- Right panel: match score, gap analysis, optimizations, interview questions, and version comparison.
-- Supplement is **not chatbot UI**; it is a structured form for follow-up requirements.
+Prompts are optimized for high textual analysis depth with strict JSON outputs:
+
+- conservative scoring
+- evidence-grounded reasoning
+- gap-priority optimization
+- role-specific interview signal generation
+
+See: `app/agents/prompts.py`.
 
 ## API
 
@@ -31,12 +43,14 @@ Fields:
 - `resume_text` (optional fallback)
 - `parseur_document_id` (optional)
 - `supplement_json` (optional JSON string)
+- `llm_config_json` (optional JSON string: `api_key`, `base_url`, `model`, `temperature`)
 - `previous_result_json` (optional JSON string for diff/comparison)
 
 Rules:
 
 - One of `resume_file`, `resume_text`, or `parseur_document_id` must be provided.
-- If a previous result is provided, backend returns comparison delta.
+- If `llm_config_json` is present, JD analysis + optimization + interview generation use LLM.
+- If LLM call fails, fallback rules are applied.
 
 ## Parseur integration
 
@@ -64,3 +78,7 @@ npm run dev
 
 Frontend default URL: `http://localhost:5173`  
 Backend default URL: `http://localhost:8000`
+
+## Testing Guide
+
+See `TESTING_README.md` for backend/frontend run and integration test steps.

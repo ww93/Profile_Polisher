@@ -1,19 +1,41 @@
 from __future__ import annotations
 
 from app.agents.base import BaseAgent
-from app.schemas import JDNormalized, MatchResult, OptimizationSuggestion, ResumeNormalized, SupplementInput
+from app.agents.prompts import OPTIMIZER_SYSTEM_PROMPT, OPTIMIZER_USER_TEMPLATE
+from app.schemas import JDNormalized, LLMConfig, MatchResult, OptimizationSuggestion, ResumeNormalized, SupplementInput
+from app.services.llm_client import LLMClient
 
 
 class OptimizerAgent(BaseAgent):
     name = "optimizer"
 
-    def run(
+    def __init__(self, llm_client: LLMClient) -> None:
+        self.llm_client = llm_client
+
+    async def run(
         self,
         resume: ResumeNormalized,
         jd: JDNormalized,
         match: MatchResult,
         supplement: SupplementInput | None = None,
+        llm: LLMConfig | None = None,
     ) -> list[OptimizationSuggestion]:
+        if llm:
+            try:
+                payload = await self.llm_client.chat_json(
+                    config=llm,
+                    system_prompt=OPTIMIZER_SYSTEM_PROMPT,
+                    user_prompt=OPTIMIZER_USER_TEMPLATE.format(
+                        supplement=(supplement.model_dump_json(indent=2) if supplement else "None"),
+                        resume=resume.raw_text,
+                        jd=jd.raw_text,
+                        match_json=match.model_dump_json(indent=2),
+                    ),
+                )
+                return [OptimizationSuggestion.model_validate(item) for item in payload.get("optimizations", [])][:6]
+            except Exception:
+                pass
+
         suggestions: list[OptimizationSuggestion] = []
         for gap in match.gaps[:3]:
             missing = gap.replace("Missing required skill: ", "")

@@ -6,10 +6,10 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.orchestrator import AnalysisOrchestrator
-from app.schemas import AnalyzeRequest, AnalyzeResponse, SupplementInput
+from app.schemas import AnalyzeRequest, AnalyzeResponse, LLMConfig, SupplementInput
 from app.services.document_parser import DocumentParser
 
-app = FastAPI(title="Profile Polisher API", version="0.2.0")
+app = FastAPI(title="Profile Polisher API", version="0.3.0")
 orchestrator = AnalysisOrchestrator()
 
 app.add_middleware(
@@ -32,6 +32,7 @@ async def analyze(
     resume_text: str | None = Form(default=None),
     parseur_document_id: str | None = Form(default=None),
     supplement_json: str | None = Form(default=None),
+    llm_config_json: str | None = Form(default=None),
     previous_result_json: str | None = Form(default=None),
     resume_file: UploadFile | None = File(default=None),
 ) -> AnalyzeResponse:
@@ -51,6 +52,10 @@ async def analyze(
     if supplement_json:
         supplement = SupplementInput.model_validate_json(supplement_json)
 
+    llm = None
+    if llm_config_json:
+        llm = LLMConfig.model_validate_json(llm_config_json)
+
     previous_result = None
     if previous_result_json:
         previous_result = AnalyzeResponse.model_validate(json.loads(previous_result_json))
@@ -60,6 +65,7 @@ async def analyze(
         jd_text=jd_text,
         parseur_document_id=parseur_document_id,
         supplement=supplement,
+        llm=llm,
     )
 
     return await orchestrator.run(request, previous_result=previous_result)

@@ -1,13 +1,34 @@
 from __future__ import annotations
 
 from app.agents.base import BaseAgent
-from app.schemas import JDNormalized, MatchResult, ResumeNormalized, ScoreDimensions, SupplementInput
+from app.agents.prompts import MATCH_SYSTEM_PROMPT, MATCH_USER_TEMPLATE
+from app.schemas import JDNormalized, LLMConfig, MatchResult, ResumeNormalized, ScoreDimensions, SupplementInput
+from app.services.llm_client import LLMClient
 
 
 class MatcherAgent(BaseAgent):
     name = "matcher"
 
-    def run(self, resume: ResumeNormalized, jd: JDNormalized, supplement: SupplementInput | None = None) -> MatchResult:
+    def __init__(self, llm_client: LLMClient) -> None:
+        self.llm_client = llm_client
+
+    async def run(self, resume: ResumeNormalized, jd: JDNormalized, supplement: SupplementInput | None = None, llm: LLMConfig | None = None) -> MatchResult:
+        if llm:
+            try:
+                payload = await self.llm_client.chat_json(
+                    config=llm,
+                    system_prompt=MATCH_SYSTEM_PROMPT,
+                    user_prompt=MATCH_USER_TEMPLATE.format(
+                        supplement=(supplement.model_dump_json(indent=2) if supplement else "None"),
+                        resume=resume.raw_text,
+                        jd=jd.raw_text,
+                    ),
+                )
+                return MatchResult.model_validate(payload)
+            except Exception:
+                # fallback to deterministic scoring
+                pass
+
         required = set(jd.must_have_skills)
         actual = set(resume.skills)
         hit = required.intersection(actual)
